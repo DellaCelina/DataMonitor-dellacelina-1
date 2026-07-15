@@ -1,4 +1,4 @@
-# 요구사항 정의서 (REQUIREMENTS)
+﻿# 요구사항 정의서 (REQUIREMENTS)
 
 ## 1. 배경 및 목적
 

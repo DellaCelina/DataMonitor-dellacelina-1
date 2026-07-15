@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 //
 // Json.h - minimal, dependency-free JSON value type for DataMonitorCore.
 //

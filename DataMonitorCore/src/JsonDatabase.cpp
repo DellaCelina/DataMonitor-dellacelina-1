@@ -1,4 +1,4 @@
-#include "datamonitor/JsonDatabase.h"
+﻿#include "datamonitor/JsonDatabase.h"
 
 #include <filesystem>
 #include <set>

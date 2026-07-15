@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 //
 // IDatabase.h - abstract collection of named ITable instances.
 //

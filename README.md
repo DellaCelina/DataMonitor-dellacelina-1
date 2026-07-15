@@ -1,4 +1,4 @@
-# DataMonitor
+﻿# DataMonitor
 
 JSON 파일을 백엔드로 하는 범용(general-purpose) 데이터 모니터링/CRUD 콘솔
 도구 PoC입니다. 자세한 배경과 설계는 `docs/REQUIREMENTS.md`,

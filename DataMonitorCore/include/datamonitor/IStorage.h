@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 //
 // IStorage.h - abstract persistence backend for a single JSON document.
 //

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 //
 // MonitorService.h - thin, domain-agnostic facade over an IDatabase meant
 // to back a console (or any other) monitoring UI.

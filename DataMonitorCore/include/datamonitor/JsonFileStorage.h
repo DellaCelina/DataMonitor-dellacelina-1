@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 //
 // JsonFileStorage.h - IStorage backed by a single JSON file on disk.
 //

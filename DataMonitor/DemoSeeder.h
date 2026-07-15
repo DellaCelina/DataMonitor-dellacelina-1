@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 //
 // DemoSeeder.h - domain-specific dummy data generator for the demo CLI.
 //

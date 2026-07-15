@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 //
 // JsonTable.h - ITable implementation backed by an IStorage of JSON records.
 //

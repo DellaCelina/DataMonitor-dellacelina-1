@@ -1,4 +1,4 @@
-// DataMonitor - console demo for the generic DataMonitorCore JSON-backed
+﻿// DataMonitor - console demo for the generic DataMonitorCore JSON-backed
 // data monitoring/CRUD engine. All semiconductor-domain knowledge lives in
 // DemoSeeder; the engine itself (DataMonitorCore) and the CLI (MonitorCli)
 // are fully generic over whatever tables happen to exist.

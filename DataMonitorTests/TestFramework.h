@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 //
 // TestFramework.h - tiny header-only micro test framework.
 //

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 //
 // JsonDatabase.h - IDatabase where each table is "<baseDir>/<name>.json".
 //

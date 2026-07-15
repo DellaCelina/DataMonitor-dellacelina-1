@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 //
 // MonitorCli.h - generic, table-agnostic console menu UI.
 //

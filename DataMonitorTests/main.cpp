@@ -1,4 +1,4 @@
-#include "TestFramework.h"
+﻿#include "TestFramework.h"
 
 int main() {
     int failed = testfw::RunAllTests();

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 //
 // ITable.h - generic CRUD interface over a collection of JSON records.
 //
