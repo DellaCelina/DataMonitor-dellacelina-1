@@ -1,5 +1,7 @@
 ﻿#include "MonitorCli.h"
 
+#include <algorithm>
+#include <cctype>
 #include <iostream>
 #include <limits>
 #include <optional>
@@ -46,6 +48,42 @@ std::optional<std::size_t> ParseOptionalSize(const std::string& line) {
     } catch (...) {
         return std::nullopt;
     }
+}
+
+std::string Trim(const std::string& text) {
+    auto isNotSpace = [](unsigned char c) { return std::isspace(c) == 0; };
+    auto begin = std::find_if(text.begin(), text.end(), isNotSpace);
+    auto end = std::find_if(text.rbegin(), text.rend(), isNotSpace).base();
+    if (begin >= end) return "";
+    return std::string(begin, end);
+}
+
+// Infers a JSON type from a raw "key=value" value token:
+//   - wrapped in double quotes ("...")  -> string, quotes stripped
+//   - "true" / "false"                  -> boolean
+//   - fully parses as a number          -> number
+//   - anything else                     -> string, taken as-is (unquoted words
+//                                          like `name=샘플A` still work as before)
+JsonValue ParseFieldValue(const std::string& rawValue) {
+    std::string value = Trim(rawValue);
+
+    if (value.size() >= 2 && value.front() == '"' && value.back() == '"') {
+        return JsonValue(value.substr(1, value.size() - 2));
+    }
+    if (value == "true") return JsonValue(true);
+    if (value == "false") return JsonValue(false);
+    if (!value.empty()) {
+        try {
+            std::size_t consumed = 0;
+            double number = std::stod(value, &consumed);
+            if (consumed == value.size()) {
+                return JsonValue(number);
+            }
+        } catch (...) {
+            // Not a number -- fall through and store it as a string.
+        }
+    }
+    return JsonValue(value);
 }
 
 } // namespace
@@ -132,11 +170,11 @@ void MonitorCli::SearchFlow() {
     std::string field;
     if (!ReadLine(field)) return;
 
-    std::cout << "검색할 값> ";
+    std::cout << "검색할 값 (숫자/true/false/문자열 자동 인식, 강제로 문자열로 찾으려면 큰따옴표로 감싸세요)> ";
     std::string value;
     if (!ReadLine(value)) return;
 
-    auto results = service_.SearchRecords(table, field, JsonValue(value));
+    auto results = service_.SearchRecords(table, field, ParseFieldValue(value));
     if (results.empty()) {
         std::cout << "검색 결과가 없습니다.\n";
         return;
@@ -152,7 +190,9 @@ void MonitorCli::AddRecordFlow() {
     if (table.empty()) return;
 
     std::cout << "필드를 key=value 형태로 콤마(,)로 구분해 입력하세요.\n";
-    std::cout << "예) name=샘플A,stock=10\n";
+    std::cout << "값은 숫자면 number, true/false면 boolean, 그 외에는 string으로 자동 인식됩니다.\n";
+    std::cout << "숫자처럼 보여도 문자열로 넣고 싶다면 큰따옴표로 감싸세요 (예: id=\"123\").\n";
+    std::cout << "예) id=\"123\",name=\"123\",num=10\n";
     std::cout << "입력> ";
     std::string line;
     if (!ReadLine(line)) return;
@@ -163,10 +203,10 @@ void MonitorCli::AddRecordFlow() {
     while (std::getline(ss, pair, ',')) {
         auto eq = pair.find('=');
         if (eq == std::string::npos) continue;
-        std::string key = pair.substr(0, eq);
+        std::string key = Trim(pair.substr(0, eq));
         std::string value = pair.substr(eq + 1);
         if (key.empty()) continue;
-        record[key] = JsonValue(value);
+        record[key] = ParseFieldValue(value);
     }
 
     try {
