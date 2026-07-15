@@ -13,10 +13,19 @@ namespace demo {
 
 class DemoSeeder {
 public:
-    // Populates the "samples" and "orders" tables with a handful of
-    // representative rows. Intended to be called once, when the database
-    // is empty (see main.cpp).
+    // Defines a TableSchema for "samples" and "orders" (types, required
+    // fields, numeric ranges, and an allowed-value list for order status),
+    // then populates both tables with a handful of representative rows.
+    // Intended to be called once, when the database is empty (see main.cpp).
+    //
+    // This demonstrates DataMonitorCore's schema feature end-to-end; the
+    // schema definitions themselves are demo-domain knowledge and live only
+    // here, never in DataMonitorCore.
     static void Seed(datamonitor::IDatabase& database);
+
+private:
+    static void DefineSampleSchema(datamonitor::IDatabase& database);
+    static void DefineOrderSchema(datamonitor::IDatabase& database);
 };
 
 } // namespace demo

@@ -1,10 +1,92 @@
 ﻿#include "DemoSeeder.h"
 
+#include "datamonitor/Schema.h"
+
+using datamonitor::FieldDefinition;
+using datamonitor::FieldType;
 using datamonitor::JsonValue;
+using datamonitor::TableSchema;
 
 namespace demo {
 
+void DemoSeeder::DefineSampleSchema(datamonitor::IDatabase& database) {
+    TableSchema schema;
+
+    FieldDefinition nameField;
+    nameField.name = "name";
+    nameField.type = FieldType::String;
+    nameField.required = true;
+    nameField.minLength = 1;
+    schema.AddField(nameField);
+
+    FieldDefinition avgProductionMinutesField;
+    avgProductionMinutesField.name = "avgProductionMinutes";
+    avgProductionMinutesField.type = FieldType::Number;
+    avgProductionMinutesField.required = true;
+    avgProductionMinutesField.minValue = 0.0;
+    schema.AddField(avgProductionMinutesField);
+
+    FieldDefinition yieldField;
+    yieldField.name = "yield";
+    yieldField.type = FieldType::Number;
+    yieldField.required = true;
+    yieldField.minValue = 0.0;
+    yieldField.maxValue = 1.0;
+    schema.AddField(yieldField);
+
+    FieldDefinition stockField;
+    stockField.name = "stock";
+    stockField.type = FieldType::Number;
+    stockField.required = true;
+    stockField.minValue = 0.0;
+    schema.AddField(stockField);
+
+    database.GetTable("samples").DefineSchema(schema);
+}
+
+void DemoSeeder::DefineOrderSchema(datamonitor::IDatabase& database) {
+    TableSchema schema;
+
+    FieldDefinition sampleIdField;
+    sampleIdField.name = "sampleId";
+    sampleIdField.type = FieldType::String;
+    sampleIdField.required = true;
+    sampleIdField.minLength = 1;
+    schema.AddField(sampleIdField);
+
+    FieldDefinition customerField;
+    customerField.name = "customer";
+    customerField.type = FieldType::String;
+    customerField.required = true;
+    customerField.minLength = 1;
+    schema.AddField(customerField);
+
+    FieldDefinition quantityField;
+    quantityField.name = "quantity";
+    quantityField.type = FieldType::Number;
+    quantityField.required = true;
+    quantityField.minValue = 1.0;
+    schema.AddField(quantityField);
+
+    FieldDefinition statusField;
+    statusField.name = "status";
+    statusField.type = FieldType::String;
+    statusField.required = true;
+    statusField.allowedValues = std::vector<JsonValue>{
+        JsonValue(std::string("pending")),
+        JsonValue(std::string("in_progress")),
+        JsonValue(std::string("completed")),
+        JsonValue(std::string("shipped")),
+    };
+    schema.AddField(statusField);
+
+    database.GetTable("orders").DefineSchema(schema);
+}
+
 void DemoSeeder::Seed(datamonitor::IDatabase& database) {
+    DefineSampleSchema(database);
+    DefineOrderSchema(database);
+
     auto& samples = database.GetTable("samples");
 
     struct SampleSeed {

@@ -5,9 +5,12 @@
 
 namespace datamonitor {
 
-JsonTable::JsonTable(std::string name, std::shared_ptr<IStorage> storage, std::string idField)
-    : name_(std::move(name)), storage_(std::move(storage)), idField_(std::move(idField)) {
+JsonTable::JsonTable(std::string name, std::shared_ptr<IStorage> storage, std::string idField,
+                     std::shared_ptr<IStorage> schemaStorage)
+    : name_(std::move(name)), storage_(std::move(storage)), idField_(std::move(idField)),
+      schemaStorage_(std::move(schemaStorage)) {
     Load();
+    LoadSchema();
 }
 
 void JsonTable::Load() {
@@ -38,6 +41,27 @@ void JsonTable::Load() {
 
 void JsonTable::Persist() const {
     storage_->Save(JsonValue(records_));
+}
+
+void JsonTable::LoadSchema() {
+    if (!schemaStorage_) return;
+    JsonValue document = schemaStorage_->Load();
+    // JsonFileStorage returns an empty Array for a nonexistent file, which
+    // is how "no schema has been defined yet" is represented on disk.
+    if (!document.IsObject()) {
+        schema_ = std::nullopt;
+        return;
+    }
+    schema_ = TableSchema::FromJson(document);
+}
+
+void JsonTable::PersistSchema() const {
+    if (!schemaStorage_) return;
+    if (schema_) {
+        schemaStorage_->Save(schema_->ToJson());
+    } else {
+        schemaStorage_->Save(JsonValue::MakeArray());
+    }
 }
 
 std::string JsonTable::GenerateId() const {
@@ -90,6 +114,12 @@ JsonValue JsonTable::Insert(JsonValue record) {
     if (!record.IsObject()) {
         throw JsonException("JsonTable::Insert requires a JSON object record");
     }
+    if (schema_) {
+        std::vector<std::string> errors = schema_->Validate(record, idField_);
+        if (!errors.empty()) {
+            throw SchemaValidationException(std::move(errors));
+        }
+    }
     const JsonValue* existingId = record.Find(idField_);
     bool needsId = existingId == nullptr || !existingId->IsString() || existingId->AsString().empty();
     if (needsId) {
@@ -104,6 +134,20 @@ bool JsonTable::Update(const std::string& id, const JsonValue& patch) {
     int index = FindIndexById(id);
     if (index < 0) return false;
     JsonValue& target = records_[static_cast<std::size_t>(index)];
+
+    if (schema_) {
+        // Validate the record as it would look *after* the patch, so
+        // required/typed fields already present can't be silently broken
+        // by a partial update.
+        JsonValue merged = target;
+        merged.MergeFrom(patch);
+        merged[idField_] = JsonValue(id);
+        std::vector<std::string> errors = schema_->Validate(merged, idField_);
+        if (!errors.empty()) {
+            throw SchemaValidationException(std::move(errors));
+        }
+    }
+
     target.MergeFrom(patch);
     // Guard against a patch overwriting the id with something else.
     target[idField_] = JsonValue(id);
@@ -121,6 +165,35 @@ bool JsonTable::Remove(const std::string& id) {
 
 std::size_t JsonTable::Count() const {
     return records_.size();
+}
+
+void JsonTable::DefineSchema(const TableSchema& schema) {
+    schema_ = schema;
+    PersistSchema();
+}
+
+void JsonTable::ClearSchema() {
+    schema_ = std::nullopt;
+    PersistSchema();
+}
+
+bool JsonTable::AddSchemaField(const FieldDefinition& field) {
+    if (!schema_) {
+        schema_ = TableSchema();
+    }
+    if (schema_->HasField(field.name)) {
+        return false;
+    }
+    schema_->AddField(field);
+    PersistSchema();
+    return true;
+}
+
+bool JsonTable::RemoveSchemaField(const std::string& fieldName) {
+    if (!schema_) return false;
+    bool removed = schema_->RemoveField(fieldName);
+    if (removed) PersistSchema();
+    return removed;
 }
 
 } // namespace datamonitor

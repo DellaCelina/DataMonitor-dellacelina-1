@@ -151,6 +151,7 @@
     <ClCompile Include="JsonTableTests.cpp" />
     <ClCompile Include="JsonDatabaseTests.cpp" />
     <ClCompile Include="MonitorServiceTests.cpp" />
+    <ClCompile Include="SchemaTests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DataMonitorCore\DataMonitorCore.vcxproj">

@@ -16,7 +16,10 @@ namespace datamonitor {
 // consumer can reuse a different primary-key convention if desired.
 class JsonTable : public ITable {
 public:
-    JsonTable(std::string name, std::shared_ptr<IStorage> storage, std::string idField = "id");
+    // `schemaStorage` is optional: pass nullptr for a table whose schema
+    // (if any) only needs to live in memory for the process lifetime.
+    JsonTable(std::string name, std::shared_ptr<IStorage> storage, std::string idField = "id",
+              std::shared_ptr<IStorage> schemaStorage = nullptr);
 
     const std::string& Name() const override { return name_; }
 
@@ -36,17 +39,27 @@ public:
 
     std::size_t Count() const override;
 
+    void DefineSchema(const TableSchema& schema) override;
+    std::optional<TableSchema> GetSchema() const override { return schema_; }
+    void ClearSchema() override;
+    bool AddSchemaField(const FieldDefinition& field) override;
+    bool RemoveSchemaField(const std::string& fieldName) override;
+
 private:
     void Load();
     void Persist() const;
+    void LoadSchema();
+    void PersistSchema() const;
     std::string GenerateId() const;
     int FindIndexById(const std::string& id) const;
 
     std::string name_;
     std::shared_ptr<IStorage> storage_;
     std::string idField_;
+    std::shared_ptr<IStorage> schemaStorage_;
     JsonValue::Array records_;
     mutable unsigned long long nextNumericId_ = 1;
+    std::optional<TableSchema> schema_;
 };
 
 } // namespace datamonitor

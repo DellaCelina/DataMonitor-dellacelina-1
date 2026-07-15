@@ -28,6 +28,12 @@
 ┌─────────────────────────────────────────────────────────┐
 │  ITable / JsonTable                                        │
 │   레코드 배열에 대한 CRUD + 검색, id 자동 채번               │
+│   + (선택) TableSchema로 insert/update 검증                 │
+└─────────────────────────────────────────────────────────┘
+                          │ uses
+┌─────────────────────────────────────────────────────────┐
+│  TableSchema / FieldDefinition (Schema.h/.cpp)              │
+│   필드별 타입/필수여부/범위/길이/허용값 제약, JSON 직렬화     │
 └─────────────────────────────────────────────────────────┘
                           │ uses
 ┌─────────────────────────────────────────────────────────┐
@@ -50,6 +56,7 @@ flowchart TB
     Service["MonitorService"]
     DB["IDatabase / JsonDatabase"]
     Table["ITable / JsonTable"]
+    Schema["TableSchema / FieldDefinition"]
     Storage["IStorage / JsonFileStorage"]
     Json["JsonValue (Json.h/.cpp)"]
 
@@ -58,7 +65,9 @@ flowchart TB
     CLI --> Seeder
     Service --> DB
     DB --> Table
+    Table --> Schema
     Table --> Storage
+    Schema --> Json
     Storage --> Json
 ```
 
@@ -71,8 +80,19 @@ flowchart TB
   교체해도 위 계층은 전혀 변경할 필요가 없습니다.
 - **ITable**: "레코드 컬렉션에 대한 CRUD"라는 개념을 추상화. 필드 이름조차
   강제하지 않고(예외: id 필드), 어떤 JSON 객체든 레코드로 받아들입니다.
+  단, 스키마가 정의된 테이블이라면 insert/update 시 자동으로 검증합니다.
+- **TableSchema / FieldDefinition**: "이 테이블의 레코드는 이런 필드로
+  구성된다"는 선택적(optional) 계약. RDB의 `CREATE TABLE` (필드 정의),
+  `ALTER TABLE ADD|DROP COLUMN` (AddSchemaField/RemoveSchemaField),
+  제약조건(NOT NULL/CHECK/타입/길이/enum)에 해당하는 것을 하나의 값 타입으로
+  표현합니다. 스키마 자체도 JSON으로 직렬화되어 `<table>.schema.json`
+  파일에 저장되므로, 재시작해도 유지됩니다. 스키마가 없는 테이블은 기존과
+  동일하게 완전히 자유로운(schemaless) JSON 레코드를 허용합니다.
 - **IDatabase**: 여러 테이블을 이름으로 관리. JsonDatabase는 디렉터리 내
-  `*.json` 파일들을 테이블로 간주해, 디스크 상태와 메모리 상태를 동기화합니다.
+  `*.json` 파일(단, `*.schema.json` 스키마 사이드카 파일은 제외)들을
+  테이블로 간주해, 디스크 상태와 메모리 상태를 동기화합니다. `CreateTable`은
+  "테이블을 추가한다"는 의도를 드러내는 `GetTable`의 별칭이며, `DropTable`은
+  데이터 파일과 스키마 파일을 모두 제거합니다.
 - **MonitorService**: 콘솔 UI가 IDatabase/ITable API를 직접 다루지 않고,
   "요약 보여주기", "페이지 단위로 보여주기" 같은 UI 친화적인 동작 단위로
   다시 감싼 파사드입니다. UI 코드가 단순해지고, 다른 프런트엔드(예: 웹 API)를
@@ -114,6 +134,7 @@ DataMonitorCore/                # 범용 엔진 (StaticLibrary)
     Json.h
     IStorage.h
     JsonFileStorage.h
+    Schema.h
     ITable.h
     JsonTable.h
     IDatabase.h
@@ -122,6 +143,7 @@ DataMonitorCore/                # 범용 엔진 (StaticLibrary)
   src/
     Json.cpp
     JsonFileStorage.cpp
+    Schema.cpp
     JsonTable.cpp
     JsonDatabase.cpp
     MonitorService.cpp
@@ -133,6 +155,7 @@ DataMonitorTests/                # 단위 테스트 (ConsoleApplication)
   JsonTableTests.cpp
   JsonDatabaseTests.cpp
   MonitorServiceTests.cpp
+  SchemaTests.cpp
   _test_data/                    # 테스트 실행 중 생성/삭제되는 스크래치 디렉터리
 docs/
   REQUIREMENTS.md
@@ -158,3 +181,22 @@ docs/
 배열의 각 원소가 하나의 레코드이며, `id` 필드가 기본 기본키(primary key)
 역할을 합니다. 이 형식은 특정 도메인에 종속되지 않으므로, 어떤 필드
 구성이든 자유롭게 사용할 수 있습니다.
+
+`data/samples.schema.json` (해당 테이블에 스키마가 정의된 경우에만 생성되는
+사이드카 파일 -- `TableSchema::ToJson()`의 결과):
+
+```json
+{
+  "strict": false,
+  "fields": [
+    { "name": "name", "type": "string", "required": true, "minLength": 1 },
+    { "name": "avgProductionMinutes", "type": "number", "required": true, "min": 0 },
+    { "name": "yield", "type": "number", "required": true, "min": 0, "max": 1 },
+    { "name": "stock", "type": "number", "required": true, "min": 0 }
+  ]
+}
+```
+
+이 파일이 없으면(또는 배열이면) 해당 테이블은 스키마가 없는 것으로 간주되어
+어떤 JSON 객체든 레코드로 허용합니다. `strict: true`로 설정하면, 스키마에
+없는 필드를 가진 레코드는 (id 필드를 제외하고) 거부됩니다.

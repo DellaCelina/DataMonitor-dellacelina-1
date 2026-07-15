@@ -39,4 +39,37 @@ bool MonitorService::DeleteRecord(const std::string& table, const std::string& i
     return t.Remove(id);
 }
 
+ITable& MonitorService::CreateTable(const std::string& name) {
+    return database_.CreateTable(name);
+}
+
+bool MonitorService::DropTable(const std::string& name) {
+    return database_.DropTable(name);
+}
+
+void MonitorService::DefineSchema(const std::string& table, const TableSchema& schema) {
+    ITable& t = database_.GetTable(table);
+    t.DefineSchema(schema);
+}
+
+std::optional<TableSchema> MonitorService::GetSchema(const std::string& table) const {
+    ITable& t = database_.GetTable(table);
+    return t.GetSchema();
+}
+
+void MonitorService::ClearSchema(const std::string& table) {
+    ITable& t = database_.GetTable(table);
+    t.ClearSchema();
+}
+
+bool MonitorService::AddSchemaField(const std::string& table, const FieldDefinition& field) {
+    ITable& t = database_.GetTable(table);
+    return t.AddSchemaField(field);
+}
+
+bool MonitorService::RemoveSchemaField(const std::string& table, const std::string& fieldName) {
+    ITable& t = database_.GetTable(table);
+    return t.RemoveSchemaField(fieldName);
+}
+
 } // namespace datamonitor

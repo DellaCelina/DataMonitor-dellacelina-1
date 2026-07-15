@@ -7,6 +7,7 @@
 // list/search/add/delete operations on top of MonitorService.
 //
 #include "datamonitor/MonitorService.h"
+#include "datamonitor/Schema.h"
 
 namespace demo {
 
@@ -25,8 +26,15 @@ private:
     void SearchFlow();
     void AddRecordFlow();
     void DeleteRecordFlow();
+    void CreateTableFlow();
+    void DropTableFlow();
+    void SchemaMenuFlow();
+    void DefineFieldFlow();
+    void RemoveFieldFlow();
+    void ShowSchemaFlow();
 
     std::string PromptTableName();
+    void PrintSchema(const std::string& table, const datamonitor::TableSchema& schema) const;
 
     datamonitor::MonitorService& service_;
 };

@@ -17,6 +17,8 @@ public:
 
     ITable& GetTable(const std::string& name) override;
 
+    ITable& CreateTable(const std::string& name) override;
+
     std::vector<std::string> TableNames() const override;
 
     bool DropTable(const std::string& name) override;
@@ -25,6 +27,7 @@ public:
 
 private:
     std::string TablePath(const std::string& name) const;
+    std::string SchemaPath(const std::string& name) const;
 
     std::string baseDirectory_;
     std::map<std::string, std::unique_ptr<JsonTable>> tables_;
