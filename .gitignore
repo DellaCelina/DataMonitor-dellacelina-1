@@ -1,0 +1,33 @@
+# Visual Studio / MSVC build artifacts
+.vs/
+x64/
+x86/
+Win32/
+Debug/
+Release/
+out/
+*.user
+*.obj
+*.pdb
+*.ilk
+*.idb
+*.iobj
+*.ipdb
+*.exp
+*.lib
+*.log
+*.tlog/
+*.recipe
+*.VC.db
+*.VC.opendb
+ipch/
+CMakeFiles/
+
+# Test scratch data (created and cleaned up by DataMonitorTests at runtime)
+DataMonitorTests/_test_data/
+
+# NOTE: ./data (the DataMonitor demo app's JSON "database" directory) is
+# intentionally NOT ignored -- see README.md for the reasoning.
+
+# Course assignment slide deck - not part of the deliverable, keep out of the public repo
+*.pdf

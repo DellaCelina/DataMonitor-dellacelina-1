@@ -1,0 +1,9 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="DataMonitorCore/DataMonitorCore.vcxproj" />
+  <Project Path="DataMonitor/DataMonitor.vcxproj" />
+  <Project Path="DataMonitorTests/DataMonitorTests.vcxproj" />
+</Solution>
